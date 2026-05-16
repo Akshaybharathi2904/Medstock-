@@ -19,13 +19,21 @@ router.get('/', auth, async (req, res) => {
     if (company) {
       query.company = company;
     }
-    if (lowStock === 'true') {
-      query.stock = { $lt: 10 };
-    }
-    if (expiring === 'true') {
+    if (lowStock === 'true' && expiring === 'true') {
+      const today = new Date();
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-      query.expiryDate = { $lte: thirtyDaysFromNow };
+      query.$and = [
+        { stock: { $lt: 10 } },
+        { expiryDate: { $gte: today, $lte: thirtyDaysFromNow } }
+      ];
+    } else if (lowStock === 'true') {
+      query.stock = { $lt: 10 };
+    } else if (expiring === 'true') {
+      const today = new Date();
+      const thirtyDaysFromNow = new Date();
+      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+      query.expiryDate = { $gte: today, $lte: thirtyDaysFromNow };
     }
 
     const medicines = await Medicine.find(query).sort({ createdAt: -1 });
